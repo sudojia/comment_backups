@@ -15,6 +15,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
@@ -22,9 +23,18 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
       - name: Build with Maven
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           TWIKOO_URL: ${{ secrets.TWIKOO_URL }}
         run: |
           mvn compile exec:java -Dexec.mainClass="cn.imzjw.comment.TwikooBackups" -Dexec.args="${ACCESS_TOKEN} ${TWIKOO_URL}"
+
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add /home/runner/work/comment_backups/comment_backups/twikoo-comment.json
+          git commit -m "Add twikoo-comment.json" || echo "No changes to commit"
+          git push
