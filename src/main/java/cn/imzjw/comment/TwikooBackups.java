@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static cn.imzjw.comment.utils.MD5Util.toMD5;
 
@@ -28,7 +29,6 @@ public class TwikooBackups {
      * 获取日志记录器对象
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(TwikooBackups.class);
-
     /**
      * json 名称
      */
@@ -65,19 +65,19 @@ public class TwikooBackups {
         HttpClient client = HttpClients.createDefault();
         // 创建 HttpPost 实例
         HttpPost post = new HttpPost(twikooUrl);
+        // 设置请求体
+        post.setEntity(new StringEntity(jsonBody.toString(), StandardCharsets.UTF_8));
         // 设置请求头，指定发送的内容类型为 JSON
         post.setHeader("Content-Type", "application/json");
-        // 设置请求体
-        post.setEntity(new StringEntity(jsonBody.toString(), "UTF-8"));
         // 发送请求并获取响应
         try {
             HttpResponse response = client.execute(post);
             HttpEntity entity = response.getEntity();
             // 检查响应状态码
-            if (response.getStatusLine().getStatusCode() == 200) {
+            if (200 == response.getStatusLine().getStatusCode()) {
                 // 将响应内容保存到本地文件
                 saveToFile(EntityUtils.toString(entity));
-                LOGGER.info("文件已保存到本地：" + TWIKOO_COMMENT_JSON);
+                LOGGER.info(TWIKOO_COMMENT_JSON + " 文件已保存到本地");
             } else {
                 LOGGER.error("请求失败，状态码：" + response.getStatusLine().getStatusCode());
             }
@@ -97,7 +97,8 @@ public class TwikooBackups {
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 fos.write(content.getBytes());
             }
-            LOGGER.info("文件保存成功：" + file.getAbsolutePath());
+            // LOGGER.info("文件保存成功：" + file.getAbsolutePath());
+            LOGGER.info("创建 json 文件，正在写入数据...");
         } catch (IOException e) {
             LOGGER.error("文件保存失败", e);
         }
