@@ -26,10 +26,10 @@ jobs:
 
       - name: Build with Maven
         env:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          PASSWORD: ${{ secrets.PASSWORD }}
           TWIKOO_URL: ${{ secrets.TWIKOO_URL }}
         run: |
-          mvn compile exec:java -Dexec.mainClass="cn.imzjw.comment.TwikooBackups" -Dexec.args="${ACCESS_TOKEN} ${TWIKOO_URL}"
+          mvn compile exec:java -Dexec.mainClass="cn.imzjw.comment.TwikooBackups" -Dexec.args="${PASSWORD} ${TWIKOO_URL}"
 
       - name: Commit and push
         run: |

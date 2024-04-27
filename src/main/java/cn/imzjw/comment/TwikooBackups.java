@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import static cn.imzjw.comment.utils.MD5Util.toMD5;
 
@@ -35,74 +34,33 @@ public class TwikooBackups {
      */
     private static final String TWIKOO_COMMENT_JSON = "twikoo-comment.json";
 
+    /**
+     * 入口函数
+     *
+     * @param args 参数
+     */
     public static void main(String[] args) {
         if (args.length == 0) {
-            LOGGER.warn("请在 Secrets 中填写 ACCESS_TOKEN 和 TWIKOO_URL...");
+            LOGGER.warn("请在 Secrets 中填写 PASSWORD 和 TWIKOO_URL...");
         }
         if (args.length == 2) {
-            String accesToken = Login(args[0], args[1]);
-            requestTwikoo(accesToken, args[1]);
+            requestTwikoo(args[0], args[1]);
         } else {
-            LOGGER.warn("ACCESS_TOKEN 和 TWIKOO_URL 变量必须填写, 缺一不可");
+            LOGGER.warn("PASSWORD 和 TWIKOO_URL 变量必须填写, 缺一不可");
         }
-    }
-
-    /**
-     * 登录接口
-     *
-     * @param password   密码
-     * @param twikoo_url twikoo 地址
-     * @return accessToken
-     */
-    public static String Login(String password, String twikoo_url) {
-        String accessToken = null;
-        String md5Password = toMD5(password);
-
-        // 创建HttpClient实例
-        HttpClient client = HttpClients.createDefault();
-
-        // 创建HttpPost实例
-        HttpPost post = new HttpPost(twikoo_url);
-
-        // 构建JSON数据
-        JSONObject jsonBody = new JSONObject();
-        jsonBody.put("accessToken", "");
-        jsonBody.put("event", "LOGIN");
-        jsonBody.put("password", md5Password);
-
-        // 设置请求头和请求体
-        post.setHeader("Content-Type", "application/json");
-        post.setEntity(new StringEntity(jsonBody.toString(), StandardCharsets.UTF_8));
-
-        // 发送请求并获取响应
-        try {
-            HttpResponse response = client.execute(post);
-            HttpEntity entity = response.getEntity();
-
-            // 检查响应状态码
-            if (response.getStatusLine().getStatusCode() == 200) {
-                // 获取响应数据
-                String responseData = EntityUtils.toString(entity, StandardCharsets.UTF_8);
-                JSONObject jsonResponse = new JSONObject(responseData);
-                accessToken = jsonResponse.getString("accessToken");
-            } else {
-                LOGGER.error("请求失败，状态码：" + response.getStatusLine().getStatusCode());
-            }
-        } catch (IOException e) {
-            LOGGER.error("请求失败：", e);
-        }
-        return accessToken;
     }
 
     /**
      * 请求数据
      *
-     * @param accessToken token，F12 获取
-     * @param twikooUrl   twikoo 地址
+     * @param password  password
+     * @param twikooUrl twikoo 地址
      */
-    public static void requestTwikoo(String accessToken, String twikooUrl) {
-        // 构建 JSON  数据
-        String jsonBody = "{\"accessToken\":\" " + accessToken + "   \",\"collection\":\"comment\",\"event\":\"COMMENT_EXPORT_FOR_ADMIN\"}";
+    public static void requestTwikoo(String password, String twikooUrl) {
+        JSONObject jsonBody = new JSONObject();
+        jsonBody.put("accessToken", toMD5(password));
+        jsonBody.put("collection", "comment");
+        jsonBody.put("event", "COMMENT_EXPORT_FOR_ADMIN");
         // 创建 HttpClient 实例
         HttpClient client = HttpClients.createDefault();
         // 创建 HttpPost 实例
@@ -110,7 +68,7 @@ public class TwikooBackups {
         // 设置请求头，指定发送的内容类型为 JSON
         post.setHeader("Content-Type", "application/json");
         // 设置请求体
-        post.setEntity(new StringEntity(jsonBody, "UTF-8"));
+        post.setEntity(new StringEntity(jsonBody.toString(), "UTF-8"));
         // 发送请求并获取响应
         try {
             HttpResponse response = client.execute(post);
