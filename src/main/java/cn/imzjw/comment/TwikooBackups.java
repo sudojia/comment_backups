@@ -2,9 +2,9 @@ package cn.imzjw.comment;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import static cn.imzjw.comment.utils.MD5Util.toMD5;
 
@@ -33,6 +35,34 @@ public class TwikooBackups {
      * json 名称
      */
     private static final String TWIKOO_COMMENT_JSON = "twikoo-comment.json";
+    /**
+     * 请求头，指定发送的内容类型为 JSON
+     */
+    private static final String APPLICATION_JSON = "application/json";
+    /**
+     * 请求参数
+     */
+    private static final String ACCESS_TOKEN = "accessToken";
+    /**
+     * 请求参数
+     */
+    private static final String COLLENTION = "collection";
+    /**
+     * 请求参数
+     */
+    private static final String EVENT = "event";
+    /**
+     * 请求参数
+     */
+    private static final String COMMENT = "comment";
+    /**
+     * 请求参数
+     */
+    private static final String COMMENT_EXPORT_FOR_ADMIN = "COMMENT_EXPORT_FOR_ADMIN";
+    /**
+     * 创建 HttpClient 实例
+     */
+    private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
 
     /**
      * 入口函数
@@ -57,21 +87,9 @@ public class TwikooBackups {
      * @param twikooUrl twikoo 地址
      */
     public static void requestTwikoo(String password, String twikooUrl) {
-        JSONObject jsonBody = new JSONObject();
-        jsonBody.put("accessToken", toMD5(password));
-        jsonBody.put("collection", "comment");
-        jsonBody.put("event", "COMMENT_EXPORT_FOR_ADMIN");
-        // 创建 HttpClient 实例
-        HttpClient client = HttpClients.createDefault();
-        // 创建 HttpPost 实例
-        HttpPost post = new HttpPost(twikooUrl);
-        // 设置请求体
-        post.setEntity(new StringEntity(jsonBody.toString(), StandardCharsets.UTF_8));
-        // 设置请求头，指定发送的内容类型为 JSON
-        post.setHeader("Content-Type", "application/json");
-        // 发送请求并获取响应
         try {
-            HttpResponse response = client.execute(post);
+            // 发送请求并获取响应
+            HttpResponse response = HTTP_CLIENT.execute(getPost(password, twikooUrl, new JSONObject()));
             HttpEntity entity = response.getEntity();
             // 检查响应状态码
             if (200 == response.getStatusLine().getStatusCode()) {
@@ -100,7 +118,39 @@ public class TwikooBackups {
             // LOGGER.info("文件保存成功：" + file.getAbsolutePath());
             LOGGER.info("创建 json 文件，正在写入数据...");
         } catch (IOException e) {
-            LOGGER.error("文件保存失败", e);
+            LOGGER.error("创建 json 文件失败", e);
         }
+    }
+
+    /**
+     * 获取 post 请求
+     *
+     * @param password  密码
+     * @param twikooUrl twikoo 地址
+     * @param jsonBody  jsonBody
+     * @return post 请求
+     */
+    private static HttpPost getPost(String password, String twikooUrl, JSONObject jsonBody) {
+        getParamMap(toMD5(password)).forEach(jsonBody::put);
+        HttpPost post = new HttpPost(twikooUrl);
+        // 设置请求体
+        post.setEntity(new StringEntity(jsonBody.toString(), StandardCharsets.UTF_8));
+        // 设置请求头，指定发送的内容类型为 JSON
+        post.setHeader("Content-Type", APPLICATION_JSON);
+        return post;
+    }
+
+    /**
+     * 请求头集合
+     *
+     * @param password 密码
+     * @return 请求头集合
+     */
+    private static Map<String, String> getParamMap(String password) {
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put(ACCESS_TOKEN, password);
+        paramMap.put(COLLENTION, COMMENT);
+        paramMap.put(EVENT, COMMENT_EXPORT_FOR_ADMIN);
+        return paramMap;
     }
 }
