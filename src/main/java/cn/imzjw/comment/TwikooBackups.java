@@ -2,11 +2,13 @@ package cn.imzjw.comment;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +94,7 @@ public class TwikooBackups {
             HttpResponse response = HTTP_CLIENT.execute(getPost(password, twikooUrl, new JSONObject()));
             HttpEntity entity = response.getEntity();
             // 检查响应状态码
-            if (200 == response.getStatusLine().getStatusCode()) {
+            if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
                 // 将响应内容保存到本地文件
                 saveToFile(EntityUtils.toString(entity));
                 LOGGER.info(TWIKOO_COMMENT_JSON + " 文件已保存到本地");
@@ -111,9 +113,14 @@ public class TwikooBackups {
      */
     private static void saveToFile(String content) {
         try {
+            // 解析原始 JSON 字符串，提取 "data" 数组
+            JSONArray dataArray = new JSONObject(content).getJSONArray("data");
+            // 将 JSON 数组转换为字符串
+            String data = dataArray.toString();
+            // 写入数组字符串到文件
             File file = new File(TWIKOO_COMMENT_JSON);
             try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(content.getBytes());
+                fos.write(data.getBytes());
             }
             // LOGGER.info("文件保存成功：" + file.getAbsolutePath());
             LOGGER.info("创建 json 文件，正在写入数据...");
