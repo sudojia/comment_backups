@@ -3,8 +3,8 @@ name: Comment Backups
 on:
   workflow_dispatch:
   schedule:
-    # 每天上午 10 点
-    - cron: '0 2 * * *'
+    # 每隔三天下午 17 点 40
+    - cron: '40 9 */3 * *'
 
 jobs:
   build:
