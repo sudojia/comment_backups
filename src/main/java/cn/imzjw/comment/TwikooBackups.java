@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +38,7 @@ public class TwikooBackups {
     /**
      * json 名称
      */
-    private static final String TWIKOO_COMMENT_JSON = "twikoo-comment.json";
+    private static final String TWIKOO_COMMENT_JSON = "twikoo-comment";
     /**
      * 请求头，指定发送的内容类型为 JSON
      */
@@ -113,12 +115,16 @@ public class TwikooBackups {
      */
     private static void saveToFile(String content) {
         try {
+            // 获取当前日期
+            String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+            // 构建新的文件名，包含日期
+            String fileNameWithDate = TWIKOO_COMMENT_JSON + "-" + currentDate + ".json";
             // 解析原始 JSON 字符串，提取 "data" 数组
             JSONArray dataArray = new JSONObject(content).getJSONArray("data");
             // 将 JSON 数组转换为字符串
             String data = dataArray.toString();
             // 写入数组字符串到文件
-            File file = new File(TWIKOO_COMMENT_JSON);
+            File file = new File(fileNameWithDate);
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 fos.write(data.getBytes());
             }

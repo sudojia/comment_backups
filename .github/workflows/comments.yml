@@ -24,6 +24,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Set Git Config
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
       - name: Build with Maven
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
@@ -31,10 +36,25 @@ jobs:
         run: |
           mvn compile exec:java -Dexec.mainClass="cn.imzjw.comment.TwikooBackups" -Dexec.args="${PASSWORD} ${TWIKOO_URL}"
 
-      - name: Commit and push
+      - name: Delete old backup files in repository
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add /home/runner/work/comment_backups/comment_backups/twikoo-comment.json
-          git commit -m "Add twikoo-comment.json" || echo "No changes to commit"
+          FILES=$(ls /home/runner/work/comment_backups/comment_backups/twikoo-comment*.json)
+          if [ -n "$FILES" ]; then
+            git rm $FILES
+            FILE_NAMES=$(echo "$FILES" | awk -F'/' '{print $NF}')
+            git commit -m "Delete Old File $FILE_NAMES" || echo "No old backup files to delete"
+          else
+            echo "No old backup files to delete"
+          fi
+
+      - name: Clean up and commit new file
+        run: |
+          git add /home/runner/work/comment_backups/comment_backups/twikoo-comment*.json
+          git commit -m "Add twikoo-comment-$(date +%Y-%m-%d).json" || echo "No changes to commit"
           git push
+
+      - name: Delete Workflow Runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 1
