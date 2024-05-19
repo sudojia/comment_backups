@@ -29,14 +29,18 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-      - name: Build with Maven
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
-          TWIKOO_URL: ${{ secrets.TWIKOO_URL }}
+      - name: Check if backup files exist
+        id: check_files
         run: |
-          mvn compile exec:java -Dexec.mainClass="cn.imzjw.comment.TwikooBackups" -Dexec.args="${PASSWORD} ${TWIKOO_URL}"
+          PATTERN="/home/runner/work/comment_backups/comment_backups/twikoo-comment*.json"
+          if find $PATTERN -type f &>/dev/null; then
+            echo "files_exist=true"
+          else
+            echo "files_exist=false"
+          fi
 
       - name: Delete old backup files in repository
+        if: steps.check_files.outputs.files_exist == 'true'
         run: |
           FILES=$(ls /home/runner/work/comment_backups/comment_backups/twikoo-comment*.json)
           if [ -n "$FILES" ]; then
@@ -46,6 +50,13 @@ jobs:
           else
             echo "No old backup files to delete"
           fi
+
+      - name: Build with Maven
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
+          TWIKOO_URL: ${{ secrets.TWIKOO_URL }}
+        run: |
+          mvn compile exec:java -Dexec.mainClass="cn.imzjw.comment.TwikooBackups" -Dexec.args="${PASSWORD} ${TWIKOO_URL}"
 
       - name: Clean up and commit new file
         run: |
