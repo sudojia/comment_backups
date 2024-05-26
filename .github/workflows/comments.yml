@@ -34,9 +34,9 @@ jobs:
         run: |
           PATTERN="/home/runner/work/comment_backups/comment_backups/twikoo-comment*.json"
           if find $PATTERN -type f &>/dev/null; then
-            echo "files_exist=true"
+            echo "::set-output name=files_exist::true"
           else
-            echo "files_exist=false"
+            echo "::set-output name=files_exist::false"
           fi
 
       - name: Delete old backup files in repository
