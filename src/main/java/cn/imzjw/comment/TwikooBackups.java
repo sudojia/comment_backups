@@ -57,7 +57,7 @@ public class TwikooBackups {
             CommonService.checkResponseCode(response);
         } catch (IOException e) {
             // 记录任何在发送请求或处理响应时发生的I/O错误
-            LOGGER.error("写入文件或发送请求失败：", e);
+            LOGGER.error("写入文件或发送请求时失败：{}", e.getMessage());
         }
     }
 }
